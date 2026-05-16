@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/container"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/filters"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/container"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/filters"
 )
 
 // ContainerList returns the list of containers in the docker host.

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/container"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/container"
 )
 
 func resetFlagsForTest(t *testing.T, args []string) func() {

@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types"
 )
 
 // Ping pings the server and returns the value of the "API-Version" header.

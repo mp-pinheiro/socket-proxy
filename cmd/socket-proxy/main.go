@@ -16,11 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wollomatic/socket-proxy/internal/config"
+	"github.com/mp-pinheiro/socket-proxy/internal/config"
 )
 
 const (
-	programURL   = "github.com/wollomatic/socket-proxy"
+	programURL   = "github.com/mp-pinheiro/socket-proxy"
 	logAddSource = false // set to true to log the source position (file and line) of the log message
 )
 
@@ -28,6 +28,7 @@ var (
 	version     = "dev" // will be overwritten by build system
 	socketProxy *httputil.ReverseProxy
 	cfg         *config.Config
+	securityCfg *config.SecurityConfig
 )
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
 		slog.Error("error initializing config", "error", err)
 		os.Exit(1)
 	}
+
+	securityCfg = config.InitSecurityConfig()
 
 	// setup channels for graceful shutdown
 	internalQuit := make(chan int, 1)       // send to this channel to invoke graceful shutdown, int is the exit code
@@ -85,6 +88,18 @@ func main() {
 		slog.Debug("no proxy container name provided")
 	}
 	cfg.AllowLists.PrintNetworks()
+	if securityCfg.Enabled() {
+		slog.Info("security restrictions enabled",
+			"denyPrivileged", securityCfg.DenyPrivileged,
+			"denyHostNetwork", securityCfg.DenyHostNetwork,
+			"denyHostPID", securityCfg.DenyHostPID,
+			"denyHostIPC", securityCfg.DenyHostIPC,
+			"denyDevices", securityCfg.DenyDevices,
+			"denyCapabilities", securityCfg.DenyCapabilities,
+			"denySecurityOpt", securityCfg.DenySecurityOpt,
+			"resolveSymlinks", securityCfg.ResolveSymlinks,
+		)
+	}
 
 	// print default request allowlist
 	cfg.AllowLists.PrintDefault(cfg.LogJSON)

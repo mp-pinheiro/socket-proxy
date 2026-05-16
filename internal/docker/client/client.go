@@ -21,10 +21,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/versions"
-	"github.com/wollomatic/socket-proxy/internal/go-connections/sockets"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/versions"
+	"github.com/mp-pinheiro/socket-proxy/internal/go-connections/sockets"
 )
 
 // DefaultDockerHost defines default host

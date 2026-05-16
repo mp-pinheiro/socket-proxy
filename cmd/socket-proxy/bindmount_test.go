@@ -40,7 +40,7 @@ func TestValidateBindMountSource(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateBindMountSource(allowedBindMounts, tt.source)
+			err := validateBindMountSource(allowedBindMounts, false, tt.source)
 			if tt.shouldPass && err != nil {
 				t.Errorf("expected %s to pass, but got error: %v", tt.source, err)
 			}
@@ -79,7 +79,7 @@ func TestIsPathAllowed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateBindMountSource([]string{tt.allowedDir}, tt.path)
+			err := validateBindMountSource([]string{tt.allowedDir}, false, tt.path)
 			if (err == nil) != tt.expected {
 				t.Errorf("isPathAllowed(%s, %s) = %v, expected %v", tt.path, tt.allowedDir, err, tt.expected)
 			}
@@ -106,7 +106,7 @@ func TestValidateBindMount(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateBindMount(allowedBindMounts, tt.bind)
+			err := validateBindMount(allowedBindMounts, false, tt.bind)
 			if tt.shouldPass && err != nil {
 				t.Errorf("expected %s to pass, but got error: %v", tt.bind, err)
 			}
@@ -201,7 +201,7 @@ func TestCheckBindMountRestrictions(t *testing.T) {
 				t.Fatalf("failed to create request: %v", err)
 			}
 
-			err = checkBindMountRestrictions(allowedBindMounts, req)
+			err = checkBindMountRestrictions(allowedBindMounts, false, req)
 			if tt.shouldPass && err != nil {
 				t.Errorf("expected request to pass, but got error: %v", err)
 			}

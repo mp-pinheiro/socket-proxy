@@ -17,8 +17,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/versions"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/versions"
 )
 
 // get sends an http request to the docker API using the method GET with a specific Go context.

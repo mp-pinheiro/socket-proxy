@@ -18,10 +18,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/container"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/events"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/filters"
-	"github.com/wollomatic/socket-proxy/internal/docker/client"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/container"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/events"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/filters"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/client"
 )
 
 const allowedDockerLabelPrefix = "socket-proxy.allow."
@@ -559,7 +559,7 @@ func (allowList AllowList) Print(ip string, logJSON bool) {
 		}
 	} else {
 		// don't use slog here, as we want to print the regexes as they are
-		// see https://github.com/wollomatic/socket-proxy/issues/11
+		// see https://github.com/mp-pinheiro/socket-proxy/issues/11
 		if ip == "" {
 			fmt.Printf("Default request allowlist:\n   %-8s %s\n", "Method", "Regex")
 		} else {

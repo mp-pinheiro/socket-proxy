@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/events"
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/filters"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/events"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/filters"
 )
 
 // Events returns a stream of events in the daemon. It's up to the caller to close the stream

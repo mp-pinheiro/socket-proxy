@@ -52,8 +52,21 @@ type (
 	}
 	// containerHostConfig is the subset of github.com/docker/docker/api/types/container.HostConfig.
 	containerHostConfig struct {
-		Binds  []string     // List of volume bindings for this container.
-		Mounts []mountMount `json:",omitempty"` // Mounts specs used by the container.
+		Binds       []string        `json:",omitempty"`
+		Mounts      []mountMount    `json:",omitempty"`
+		Privileged  bool            `json:",omitempty"`
+		NetworkMode string          `json:",omitempty"`
+		PidMode     string          `json:",omitempty"`
+		IpcMode     string          `json:",omitempty"`
+		CapAdd      []string        `json:",omitempty"`
+		SecurityOpt []string        `json:",omitempty"`
+		Devices     []deviceMapping `json:",omitempty"`
+	}
+	// deviceMapping is the subset of github.com/docker/docker/api/types/container.DeviceMapping.
+	deviceMapping struct {
+		PathOnHost        string `json:",omitempty"`
+		PathInContainer   string `json:",omitempty"`
+		CgroupPermissions string `json:",omitempty"`
 	}
 	// swarmServiceSpec is the subset of github.com/docker/docker/api/types/swarm.ServiceSpec.
 	swarmServiceSpec struct {
@@ -79,7 +92,7 @@ type (
 )
 
 // checkBindMountRestrictions checks if bind mounts in the request are allowed.
-func checkBindMountRestrictions(allowedBindMounts []string, r *http.Request) error {
+func checkBindMountRestrictions(allowedBindMounts []string, resolveSymlinks bool, r *http.Request) error {
 	// Only check if bind mount restrictions are configured
 	if len(allowedBindMounts) == 0 {
 		return nil
@@ -94,23 +107,23 @@ func checkBindMountRestrictions(allowedBindMounts []string, r *http.Request) err
 	switch {
 	case len(pathParts) >= 4 && pathParts[2] == "containers" && pathParts[3] == "create":
 		// Container creation: /vX.xx/containers/create
-		return checkContainer(allowedBindMounts, r)
+		return checkContainer(allowedBindMounts, resolveSymlinks, r)
 	case len(pathParts) >= 5 && pathParts[2] == "containers" && pathParts[4] == "update":
 		// Container update: /vX.xx/containers/{id}/update
-		return checkContainer(allowedBindMounts, r)
+		return checkContainer(allowedBindMounts, resolveSymlinks, r)
 	case len(pathParts) >= 4 && pathParts[2] == "services" && pathParts[3] == "create":
 		// Service creation: /vX.xx/services/create
-		return checkService(allowedBindMounts, r)
+		return checkService(allowedBindMounts, resolveSymlinks, r)
 	case len(pathParts) >= 5 && pathParts[2] == "services" && pathParts[4] == "update":
 		// Service update: /vX.xx/services/{id}/update
-		return checkService(allowedBindMounts, r)
+		return checkService(allowedBindMounts, resolveSymlinks, r)
 	default:
 		return nil
 	}
 }
 
 // checkContainer checks bind mounts in container creation requests.
-func checkContainer(allowedBindMounts []string, r *http.Request) error {
+func checkContainer(allowedBindMounts []string, resolveSymlinks bool, r *http.Request) error {
 	body, err := readAndRestoreBody(r)
 	if err != nil {
 		return err
@@ -122,11 +135,11 @@ func checkContainer(allowedBindMounts []string, r *http.Request) error {
 		return nil // Don't block if we can't parse.
 	}
 
-	return checkHostConfigBindMounts(allowedBindMounts, req.HostConfig)
+	return checkHostConfigBindMounts(allowedBindMounts, resolveSymlinks, req.HostConfig)
 }
 
 // checkService checks bind mounts in service creation requests.
-func checkService(allowedBindMounts []string, r *http.Request) error {
+func checkService(allowedBindMounts []string, resolveSymlinks bool, r *http.Request) error {
 	body, err := readAndRestoreBody(r)
 	if err != nil {
 		return err
@@ -143,6 +156,7 @@ func checkService(allowedBindMounts []string, r *http.Request) error {
 	}
 	return checkHostConfigBindMounts(
 		allowedBindMounts,
+		resolveSymlinks,
 		&containerHostConfig{
 			Mounts: req.TaskTemplate.ContainerSpec.Mounts,
 		},
@@ -150,14 +164,14 @@ func checkService(allowedBindMounts []string, r *http.Request) error {
 }
 
 // checkHostConfigBindMounts checks bind mounts in HostConfig.
-func checkHostConfigBindMounts(allowedBindMounts []string, hostConfig *containerHostConfig) error {
+func checkHostConfigBindMounts(allowedBindMounts []string, resolveSymlinks bool, hostConfig *containerHostConfig) error {
 	if hostConfig == nil {
 		return nil // No HostConfig, nothing to check
 	}
 
 	// Check legacy Binds field
 	for _, bind := range hostConfig.Binds {
-		if err := validateBindMount(allowedBindMounts, bind); err != nil {
+		if err := validateBindMount(allowedBindMounts, resolveSymlinks, bind); err != nil {
 			return err
 		}
 	}
@@ -165,7 +179,7 @@ func checkHostConfigBindMounts(allowedBindMounts []string, hostConfig *container
 	// Check modern Mounts field
 	for _, mountItem := range hostConfig.Mounts {
 		if mountItem.Type == mountTypeBind {
-			if err := validateBindMountSource(allowedBindMounts, mountItem.Source); err != nil {
+			if err := validateBindMountSource(allowedBindMounts, resolveSymlinks, mountItem.Source); err != nil {
 				return err
 			}
 		}
@@ -175,22 +189,33 @@ func checkHostConfigBindMounts(allowedBindMounts []string, hostConfig *container
 }
 
 // validateBindMount validates a bind mount string in the format "source:target:options".
-func validateBindMount(allowedBindMounts []string, bind string) error {
+func validateBindMount(allowedBindMounts []string, resolveSymlinks bool, bind string) error {
 	parts := strings.Split(bind, ":")
 	if len(parts) < 2 {
 		return fmt.Errorf("invalid bind mount format: %s", bind)
 	}
-	return validateBindMountSource(allowedBindMounts, parts[0])
+	return validateBindMountSource(allowedBindMounts, resolveSymlinks, parts[0])
 }
 
 // validateBindMountSource checks if the source directory is allowed.
-func validateBindMountSource(allowedBindMounts []string, source string) error {
+func validateBindMountSource(allowedBindMounts []string, resolveSymlinks bool, source string) error {
 	// Skip if source is not an absolute path (i.e. bind mount).
 	if !strings.HasPrefix(source, "/") {
 		return nil
 	}
 
 	source = filepath.Clean(source) // Clean the path to resolve .. and . components.
+
+	if resolveSymlinks {
+		resolved, err := filepath.EvalSymlinks(source)
+		if err != nil {
+			slog.Warn("cannot resolve symlinks for bind mount source, using cleaned path",
+				"source", source, "error", err)
+		} else {
+			source = resolved
+		}
+	}
+
 	for _, allowedDir := range allowedBindMounts {
 		if allowedDir == "/" || source == allowedDir || strings.HasPrefix(source, allowedDir+"/") {
 			return nil

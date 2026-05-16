@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/wollomatic/socket-proxy/internal/config"
+	"github.com/mp-pinheiro/socket-proxy/internal/config"
 )
 
 // handleHTTPRequest checks if the request is allowed and sends it to the proxy.
@@ -31,8 +31,14 @@ func handleHTTPRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check bind mount restrictions
-	if err := checkBindMountRestrictions(allowList.AllowedBindMounts, r); err != nil {
+	if err := checkBindMountRestrictions(allowList.AllowedBindMounts, securityCfg.ResolveSymlinks, r); err != nil {
 		communicateBlockedRequest(w, r, "bind mount restriction: "+err.Error(), http.StatusForbidden)
+		return
+	}
+
+	// check security restrictions (privileged, host namespace, capabilities, etc.)
+	if err := checkSecurityRestrictions(securityCfg, r); err != nil {
+		communicateBlockedRequest(w, r, "security restriction: "+err.Error(), http.StatusForbidden)
 		return
 	}
 

@@ -6,7 +6,7 @@ https://github.com/moby/moby/blob/v28.5.1/api/types/container/network_settings.g
 */
 
 import (
-	"github.com/wollomatic/socket-proxy/internal/docker/api/types/network"
+	"github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/network"
 )
 
 // NetworkSettingsSummary provides a summary of container's networks

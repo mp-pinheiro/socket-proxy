@@ -5,7 +5,7 @@ This was modified from:
 https://github.com/moby/moby/blob/v28.5.1/api/types/events/events.go
 */
 
-import "github.com/wollomatic/socket-proxy/internal/docker/api/types/filters"
+import "github.com/mp-pinheiro/socket-proxy/internal/docker/api/types/filters"
 
 // Type is used for event-types.
 type Type string

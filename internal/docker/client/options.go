@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/wollomatic/socket-proxy/internal/go-connections/sockets"
+	"github.com/mp-pinheiro/socket-proxy/internal/go-connections/sockets"
 )
 
 // Opt is a configuration option to initialize a [Client].
